@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Earth | AI Urban Resiliency</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #060913;
+            color: #ffffff;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        /* High-tech grid canvas layer */
+        body::before {
+            content: ""; position: absolute; inset: 0;
+            background-image: linear-gradient(rgba(244, 63, 94, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(244, 63, 94, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px; pointer-events: none; z-index: 1;
+        }
+
+        /* Abstract radiant heat glow elements */
+        .thermal-glow {
+            position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, transparent 70%);
+            bottom: -10%; right: -5%; z-index: 1; pointer-events: none;
+        }
+
+        /* Glassmorphic Side Hero Section */
+        .hero-sidebar {
+            width: 550px; height: 100%; background: rgba(13, 18, 33, 0.75);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px); z-index: 10;
+            padding: 60px 45px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .badge {
+            background: linear-gradient(90deg, rgba(244,63,94,0.15), transparent);
+            border-left: 3px solid #f43f5e; color: #f43f5e;
+            padding: 8px 16px; font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px; width: fit-content;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif; font-size: 3.5rem;
+            font-weight: 700; line-height: 1.1; margin: 25px 0;
+            background: linear-gradient(to bottom right, #ffffff 60%, #94a3b8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .tagline { font-size: 1.1rem; color: #94a3b8; line-height: 1.6; margin-bottom: 40px; font-weight: 300; }
+
+        .start-btn {
+            background: linear-gradient(135deg, #f43f5e, #be123c);
+            color: white; border: none; padding: 18px 40px; font-size: 1rem;
+            font-weight: 600; border-radius: 8px; cursor: pointer; letter-spacing: 0.5px;
+            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.3); transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;
+        }
+        .start-btn:hover {
+            transform: translateY(-2px); box-shadow: 0 15px 30px rgba(244, 63, 94, 0.45);
+            background: linear-gradient(135deg, #ff4d6d, #e11d48);
+        }
+
+        /* Visual Dashboard Preview Canvas (Right Side) */
+        .preview-canvas {
+            flex: 1; height: 100%; position: relative; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at center, #0f172a 0%, #060913 100%);
+        }
+
+        .telemetry-box {
+            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 24px; width: 380px; position: relative;
+        }
+        .pulse-node {
+            position: absolute; top: -8px; left: 24px; background: #10b981;
+            color: #060913; font-size: 0.65rem; font-weight: 700; padding: 2px 8px;
+            border-radius: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .ticker-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .ticker-row:last-child { border-bottom: none; }
+        .label { color: #64748b; }
+        .value { font-family: 'Space Grotesk', sans-serif; color: #f43f5e; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="thermal-glow"></div>
+
+    <div class="hero-sidebar">
+        <div>
+            <div class="badge">Framework v2.0 Live</div>
+            <h1>Thermal<br>Earth.ai</h1>
+            <p class="tagline">A physics-informed machine learning system designed to isolate localized thermodynamic drivers, identify microclimate vulnerabilities, and test real-time urban intervention workflows.</p>
+        </div>
+
+        <div>
+            <button class="start-btn" onclick="window.location.href='map.html'">
+                Initialize Dashboard Workflow ➔
+            </button>
+        </div>
+    </div>
+
+    <div class="preview-canvas">
+        <div class="telemetry-box">
+            <div class="pulse-node">Core Server Engine</div>
+            <div class="ticker-row">
+                <span class="label">Target Target Domain</span>
+                <span class="value" style="color:#fff;">Mumbai Metropolitan</span>
+            </div>
+            <div class="ticker-row">
+                <span class="label">Ground Networks Loaded</span>
+                <span class="value" style="color:#38bdf8;">10 CPCB Stations</span>
+            </div>
+            <div class="ticker-row">
+                <span class="label">Thermodynamic Inputs</span>
+                <span class="value" style="color:#a78bfa;">ERA5 Reanalysis</span>
+            </div>
+            <div class="ticker-row">
+                <span class="label">Satellite Engine Matrix</span>
+                <span class="value">ECOSTRESS TST</span>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
