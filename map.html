@@ -10,19 +10,19 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: #060913; color: #ffffff; display: flex; height: 100vh; width: 100vw; overflow: hidden; }
         
-        .sidebar { width: 400px; max-width: 400px; min-width: 400px; background-color: #0d1221; border-right: 1px solid #1f2937; padding: 30px; display: flex; flex-direction: column; gap: 23px; overflow-y: auto; z-index: 10; }
+        .sidebar { width: 400px; max-width: 400px; min-width: 400px; background-color: #0d1221; border-right: 1px solid #1f2937; padding: 30px; display: flex; flex-direction: column; gap: 23px; overflow-y: auto; }
         .logo { font-size: 1.25rem; font-weight: 600; background: linear-gradient(to right, #f43f5e, #be123c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .section-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
         .input-field { width: 100%; padding: 12px; background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; color: white; outline: none; font-size: 0.9rem; }
         
-        .action-btn { width: 100%; padding: 14px; background-color: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+        .action-btn { width: 100%; padding: 14px; background-color: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; }
         .action-btn:hover { background-color: #2563eb; }
         .btn-active { background: linear-gradient(135deg, #f43f5e, #be123c) !important; color: white !important; border-color: #f43f5e !important; }
         
         #map { position: relative; height: 100vh; width: calc(100vw - 400px); background-color: #060913; z-index: 1; }
         .or-divider { text-align: center; color: #4b5563; font-size: 0.8rem; text-transform: uppercase; margin: 5px 0; font-weight: 600; }
         
-        .driver-panel { position: absolute; bottom: 30px; right: 30px; background: rgba(13, 18, 33, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #f43f5e; width: 350px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: none; }
+        .driver-panel { position: absolute; bottom: 30px; right: 30px; background: rgba(13, 18, 33, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #f43f5e; width: 350px; z-index: 1000; backdrop-filter: blur(10px); }
         .driver-panel h4 { color: #f97316; margin-bottom: 8px; font-size: 1rem; }
         .driver-panel p { font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; }
         
@@ -33,6 +33,10 @@
         .map-legend { position: absolute; top: 20px; right: 20px; background: #0d1221; padding: 15px; border-radius: 10px; border: 1px solid #334155; width: 250px; z-index: 9999; display: none; }
         .legend-bar { height: 14px; width: 100%; background: linear-gradient(to right, #000004, #3b0f70, #8c2981, #de4968, #fe9f6d, #fcfdbf); margin-bottom: 6px; }
         .legend-labels { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        
+        .info-panel { position: absolute; top: 20px; left: 20px; background: rgba(13, 18, 33, 0.9); padding: 12px; border-radius: 8px; border: 1px solid #334155; max-width: 300px; font-size: 0.8rem; z-index: 999; }
+        .info-panel p { margin: 4px 0; color: #94a3b8; }
+        .info-panel .value { color: #10b981; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -55,40 +59,40 @@
         <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
             <div class="section-title">2. Analysis Workflow</div>
             <button id="stressMapBtn" class="action-btn" onclick="showRealEcostressMap()"><span>See Heat Stress Map (ECOSTRESS)</span> ➔</button>
-            <button id="hotspotsBtn" class="action-btn" onclick="showHeatSpots()"><span>See Heat Spots (IMD Criteria)</span> ➔</button>
-            <button id="driversBtn" class="action-btn" onclick="activateDriversHover()"><span>See key drivers of heat for Hotspot</span> ➔</button>
-            <button id="interventionsBtn" class="action-btn" onclick="showInterventions()"><span>Show cooling interventions for Hotspot</span> ➔</button>
+            <button id="hotspotsBtn" class="action-btn" onclick="showHeatSpots()"><span>See Heat Spots (AI-Detected)</span> ➔</button>
+            <button id="driversBtn" class="action-btn" onclick="activateDriversHover()"><span>See key drivers of heat</span> ➔</button>
+            <button id="interventionsBtn" class="action-btn" onclick="showInterventions()"><span>Show cooling interventions</span> ➔</button>
 
             <div id="interventionControls" class="slider-box" style="display: none;">
                 <div id="activeTargetLabel" style="font-size:0.8rem; font-weight:600; color:#f97316; margin-bottom:5px;">Target: Select a Hotspot on Map</div>
                 
                 <div class="slider-group">
-                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🌲 Urban Greening Canopy</span> <b id="vegVal">0%</b></label>
+                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🌲 Urban Greening</span> <b id="vegVal">0%</b></label>
                     <input type="range" class="slider-input" id="vegSlider" min="0" max="100" value="0" oninput="runCoolingSimulation()">
                 </div>
                 
                 <div class="slider-group">
-                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🏢 Reflective Cool Roofs (Albedo)</span> <b id="infraVal">0%</b></label>
+                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🏢 Cool Roofs</span> <b id="infraVal">0%</b></label>
                     <input type="range" class="slider-input" id="infraSlider" min="0" max="100" value="0" oninput="runCoolingSimulation()">
                 </div>
 
                 <div class="slider-group">
-                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🍃 Abate Fine Particulates (PM2.5)</span> <b id="pmVal">0%</b></label>
+                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🍃 Particulate Reduction</span> <b id="pmVal">0%</b></label>
                     <input type="range" class="slider-input" id="pmSlider" min="0" max="100" value="0" oninput="runCoolingSimulation()">
                 </div>
 
                 <div class="slider-group">
-                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🚗 Mitigate Traffic Emissions (NO2)</span> <b id="no2Val">0%</b></label>
+                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🚗 Traffic Mitigation</span> <b id="no2Val">0%</b></label>
                     <input type="range" class="slider-input" id="no2Slider" min="0" max="100" value="0" oninput="runCoolingSimulation()">
                 </div>
 
                 <div class="slider-group">
-                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🏭 Reduce Industrial Exhaust (SO2)</span> <b id="so2Val">0%</b></label>
+                    <label style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>🏭 Industrial Reduction</span> <b id="so2Val">0%</b></label>
                     <input type="range" class="slider-input" id="so2Slider" min="0" max="100" value="0" oninput="runCoolingSimulation()">
                 </div>
 
                 <div style="border-top: 1px solid #334155; padding-top: 8px; text-align: center; font-size: 0.8rem;">
-                    Simulated Hotspot Temperature: <br>
+                    Simulated Temperature: <br>
                     <span id="impactTemp" style="font-size: 1.2rem; font-weight: 700; color: #f43f5e;">--</span>
                 </div>
             </div>
@@ -103,13 +107,23 @@
         <div class="legend-labels"><span>28.5°C</span><span>48.0°C</span></div>
     </div>
 
+    <div id="infoPanel" class="info-panel" style="display: none;">
+        <p><strong>🌡️ Hotspot Analysis</strong></p>
+        <p>Temp: <span class="value" id="infoPanelTemp">--</span></p>
+        <p>NDVI: <span class="value" id="infoPanelNDVI">--</span></p>
+        <p>NDBI: <span class="value" id="infoPanelNDBI">--</span></p>
+        <p>Type: <span class="value" id="infoPanelType">--</span></p>
+    </div>
+
     <div id="driverPanel" class="driver-panel">
         <h4 id="panelTitle">Diagnostic Engine</h4>
-        <p id="panelText">Hover over an active cluster to read localized physics metrics.</p>
+        <p id="panelText">Hover over a hotspot to view key thermal drivers.</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="data-processor.js"></script>
     <script>
+        // ============ Map Initialization ============
         var boundsLimit = [[18.65, 72.45], [19.45, 73.25]];
         var map = L.map('map', {
             center: [19.0760, 72.8777],
@@ -124,169 +138,262 @@
             attribution: '&copy; CARTO'
         }).addTo(map);
 
+        // ============ State Management ============
         var ecostressLayer, geojsonLayer, customMarker;
         var hoverWorkflowActive = false;
         var interventionWorkflowActive = false;
-        
-        // Tracking states for the selected active hotspot shape
         var selectedHotspotData = null;
         var selectedLayerRef = null;
+        var allHotspotsData = null;
 
+        // ============ ECOSTRESS Heat Stress Map ============
         function showRealEcostressMap() {
             document.getElementById('stressMapBtn').classList.add('btn-active');
             if (ecostressLayer) map.removeLayer(ecostressLayer);
+            
             var imageUrl = 'mumbai_ecostress.png';
             var imageBounds = [[18.6323, 72.4829], [19.6395, 73.3757]];
             ecostressLayer = L.imageOverlay(imageUrl, imageBounds, { opacity: 0.40, zIndex: 5 }).addTo(map);
             document.getElementById('mapLegend').style.display = 'block';
         }
 
+        // ============ Physics-Backed Hotspot Generation ============
         function showHeatSpots() {
-            if (!ecostressLayer) { alert("Enable Thermal Layer first!"); return; }
+            if (!ecostressLayer) { 
+                alert("Enable Thermal Layer first!"); 
+                return; 
+            }
+            
             document.getElementById('hotspotsBtn').classList.add('btn-active');
             if (geojsonLayer) map.removeLayer(geojsonLayer);
 
+            // Generate hotspots from physics-backed criteria
+            generatePhysicsBackedHotspots();
+        }
+
+        function generatePhysicsBackedHotspots() {
+            // Fetch or use pre-computed hotspots
             fetch('hotspots.geojson?nocache=' + Math.random())
                 .then(res => res.json())
                 .then(data => {
-                    geojsonLayer = L.geoJSON(data, {
-                        style: { color: '#f43f5e', weight: 1.5, fillColor: '#be123c', fillOpacity: 0.25, zIndex: 10 },
-                        onEachFeature: function(feature, layer) {
-                            
-                            // Mouseover Hover Event Logic
-                            layer.on('mouseover', function() {
-                                if (!hoverWorkflowActive || interventionWorkflowActive) return;
-                                layer.setStyle({ color: '#f97316', fillColor: '#ea580c', fillOpacity: 0.55 });
-                                document.getElementById('panelTitle').innerText = feature.properties.name + ` (${feature.properties.temp}°C)`;
-                                document.getElementById('panelText').innerText = feature.properties.drivers;
-                            });
-                            
-                            layer.on('mouseout', function() {
-                                if (!hoverWorkflowActive || interventionWorkflowActive) return;
-                                if (selectedLayerRef === layer) return; // Keep clicked locked styled
-                                layer.setStyle({ color: '#f43f5e', fillColor: '#be123c', fillOpacity: 0.25 });
-                            });
-
-                            // Click Selection Event Logic for Cooling Simulator
-                            layer.on('click', function() {
-                                if (!interventionWorkflowActive) return;
-                                
-                                // Reset previously clicked vector styles
-                                if (geojsonLayer) {
-                                    geojsonLayer.setStyle({ color: '#f43f5e', fillColor: '#be123c', fillOpacity: 0.25 });
-                                }
-                                
-                                // Lock state parameters onto the newly clicked polygon target
-                                selectedHotspotData = feature.properties;
-                                selectedLayerRef = layer;
-                                
-                                // Style selection focus visually on the map canvas grid
-                                layer.setStyle({ color: '#00f2fe', fillColor: '#00c6ff', fillOpacity: 0.45 });
-                                
-                                // Update layout descriptors
-                                document.getElementById('activeTargetLabel').innerText = `Active: ${selectedHotspotData.name}`;
-                                document.getElementById('vegSlider').value = 0;
-                                document.getElementById('infraSlider').value = 0;
-                                document.getElementById('vegVal').innerText = "0%";
-                                document.getElementById('infraVal').innerText = "0%";
-                                document.getElementById('impactTemp').innerText = selectedHotspotData.temp.toFixed(1) + "°C (Baseline)";
-                                document.getElementById('impactTemp').style.color = "#f43f5e";
-                            });
+                    allHotspotsData = data;
+                    
+                    // Enhance with physics calculations
+                    data.features = data.features.map(feature => {
+                        const props = feature.properties;
+                        
+                        // Determine if coastal
+                        const coords = feature.geometry.coordinates[0][0];
+                        const isCoastal = coords[0] < 72.50; // Coastal threshold
+                        
+                        // Verify against thresholds
+                        const threshold = isCoastal ? 37 : 40;
+                        const qualifiesAsHotspot = props.temp >= threshold;
+                        
+                        // Calculate drivers
+                        if (!props.drivers || props.drivers.length === 0) {
+                            props.drivers = calculateDriverString(props);
                         }
+                        
+                        return feature;
+                    });
+                    
+                    // Render hotspots on map
+                    geojsonLayer = L.geoJSON(data, {
+                        style: function(feature) {
+                            return { 
+                                color: '#f43f5e', 
+                                weight: 2, 
+                                fillColor: '#be123c', 
+                                fillOpacity: 0.3, 
+                                zIndex: 10 
+                            };
+                        },
+                        onEachFeature: attachHotspotEvents
                     }).addTo(map);
+
+                    console.log("Hotspots loaded and rendered:", data.features.length);
                 });
         }
 
+        function calculateDriverString(props) {
+            const uhi = (1 - props.ndvi) * 100;
+            const builtUp = (props.ndbi + 0.5) * 100 * 0.6;
+            const vegDeficit = Math.max(0, (0.4 - props.ndvi) * 250);
+            
+            return `UHI: ${Math.round(uhi)}% | Built-up: ${Math.round(builtUp)}% | Veg Deficit: ${Math.round(vegDeficit)}m² | Coastal: ${props.is_coastal ? 'Yes' : 'No'}`;
+        }
+
+        function attachHotspotEvents(feature, layer) {
+            // Hover event for drivers
+            layer.on('mouseover', function() {
+                if (!hoverWorkflowActive || interventionWorkflowActive) return;
+                
+                layer.setStyle({ 
+                    color: '#f97316', 
+                    fillColor: '#ea580c', 
+                    fillOpacity: 0.55 
+                });
+                
+                updateDriverPanel(feature.properties);
+                updateInfoPanel(feature.properties);
+            });
+            
+            layer.on('mouseout', function() {
+                if (!hoverWorkflowActive || interventionWorkflowActive) return;
+                if (selectedLayerRef === layer) return;
+                
+                layer.setStyle({ 
+                    color: '#f43f5e', 
+                    fillColor: '#be123c', 
+                    fillOpacity: 0.3 
+                });
+                document.getElementById('infoPanel').style.display = 'none';
+            });
+
+            // Click event for intervention selection
+            layer.on('click', function() {
+                if (!interventionWorkflowActive) return;
+                
+                if (geojsonLayer) {
+                    geojsonLayer.setStyle({ 
+                        color: '#f43f5e', 
+                        fillColor: '#be123c', 
+                        fillOpacity: 0.3 
+                    });
+                }
+                
+                selectedHotspotData = feature.properties;
+                selectedLayerRef = layer;
+                
+                layer.setStyle({ 
+                    color: '#00f2fe', 
+                    fillColor: '#00c6ff', 
+                    fillOpacity: 0.45 
+                });
+                
+                // Reset sliders
+                document.getElementById('activeTargetLabel').innerText = `Active: ${selectedHotspotData.name}`;
+                resetSliders();
+                
+                updateSimulationDisplay();
+            });
+        }
+
+        function updateDriverPanel(props) {
+            document.getElementById('panelTitle').innerText = props.name + ` (${props.temp}°C)`;
+            document.getElementById('panelText').innerText = props.drivers;
+        }
+
+        function updateInfoPanel(props) {
+            document.getElementById('infoPanelTemp').innerText = props.temp + "°C";
+            document.getElementById('infoPanelNDVI').innerText = props.ndvi.toFixed(3);
+            document.getElementById('infoPanelNDBI').innerText = props.ndbi.toFixed(3);
+            document.getElementById('infoPanelType').innerText = props.is_coastal ? "Coastal" : "Inland";
+            document.getElementById('infoPanel').style.display = 'block';
+        }
+
+        // ============ Drivers Hover Workflow ============
         function activateDriversHover() {
-            if (!geojsonLayer) { alert("Load AI Hotspots First!"); return; }
+            if (!geojsonLayer) { 
+                alert("Load Hotspots First!"); 
+                return; 
+            }
+            
             document.getElementById('driversBtn').classList.add('btn-active');
             document.getElementById('interventionsBtn').classList.remove('btn-active');
             document.getElementById('interventionControls').style.display = 'none';
+            
             hoverWorkflowActive = true;
             interventionWorkflowActive = false;
             document.getElementById('driverPanel').style.display = 'block';
         }
 
+        // ============ Cooling Interventions Workflow ============
         function showInterventions() {
-            if (!geojsonLayer) { alert("Enable Mapped Hotspots First!"); return; }
+            if (!geojsonLayer) { 
+                alert("Enable Hotspots First!"); 
+                return; 
+            }
+            
             document.getElementById('interventionsBtn').classList.add('btn-active');
             document.getElementById('driversBtn').classList.remove('btn-active');
             document.getElementById('driverPanel').style.display = 'none';
-            
             document.getElementById('interventionControls').style.display = 'block';
+            
             hoverWorkflowActive = false;
             interventionWorkflowActive = true;
-
-            // Clear all slider states on menu initialization
-            document.getElementById('pmSlider').value = 0;
-            document.getElementById('pmVal').innerText = "0%";
-            document.getElementById('no2Slider').value = 0;
-            document.getElementById('no2Val').innerText = "0%";
-            document.getElementById('so2Slider').value = 0;
-            document.getElementById('so2Val').innerText = "0%";
             
-            alert("Click on any specific red hotspot polygon on the map to initialize its custom cooling sliders!");
+            resetSliders();
+            alert("Click on a hotspot polygon to initialize its custom cooling sliders!");
         }
 
+        function resetSliders() {
+            ['veg', 'infra', 'pm', 'no2', 'so2'].forEach(type => {
+                document.getElementById(type + 'Slider').value = 0;
+                document.getElementById(type + 'Val').innerText = "0%";
+            });
+        }
+
+        // ============ Physics-Backed Cooling Simulation ============
         function runCoolingSimulation() {
             if (!selectedHotspotData || !selectedLayerRef) {
-                alert("Please click an active red hotspot sector on the map layer grid canvas first!");
+                alert("Please click a hotspot first!");
                 return;
             }
 
-            // Read all 5 inputs from the sidebar controls
-            var vegInput = parseInt(document.getElementById('vegSlider').value);
-            var infraInput = parseInt(document.getElementById('infraSlider').value);
-            var pmInput = parseInt(document.getElementById('pmSlider').value);
-            var no2Input = parseInt(document.getElementById('no2Slider').value);
-            var so2Input = parseInt(document.getElementById('so2Slider').value);
+            const veg = parseInt(document.getElementById('vegSlider').value);
+            const infra = parseInt(document.getElementById('infraSlider').value);
+            const pm = parseInt(document.getElementById('pmSlider').value);
+            const no2 = parseInt(document.getElementById('no2Slider').value);
+            const so2 = parseInt(document.getElementById('so2Slider').value);
             
-            // Update UI text readouts live
-            document.getElementById('vegVal').innerText = vegInput + "%";
-            document.getElementById('infraVal').innerText = infraInput + "%";
-            document.getElementById('pmVal').innerText = pmInput + "%";
-            document.getElementById('no2Val').innerText = no2Input + "%";
-            document.getElementById('so2Val').innerText = so2Input + "%";
+            // Update UI labels
+            document.getElementById('vegVal').innerText = veg + "%";
+            document.getElementById('infraVal').innerText = infra + "%";
+            document.getElementById('pmVal').innerText = pm + "%";
+            document.getElementById('no2Val').innerText = no2 + "%";
+            document.getElementById('so2Val').innerText = so2 + "%";
             
-            var baseTemp = selectedHotspotData.temp;
-            var localNDVI = selectedHotspotData.ndvi;
-            var localNDBI = selectedHotspotData.ndbi;
+            // Call physics-backed cooling calculation
+            const result = calculateCoolingEffect(
+                selectedHotspotData.temp,
+                selectedHotspotData.ndvi,
+                selectedHotspotData.ndbi,
+                veg, infra, pm, no2, so2
+            );
             
-            // Core physical scaling efficiencies
-            var vegEfficiency = localNDVI < 0.15 ? 0.05 : 0.02;
-            var infraEfficiency = localNDBI > 0.55 ? 0.04 : 0.02;
-            
-            // Gas mitigation thermal weights (reflecting greenhouse radiative forcing mechanics)
-            var pmEfficiency = 0.025;  // High scattering/absorption impact
-            var no2Efficiency = 0.015; // Traffic boundary weight
-            var so2Efficiency = 0.012; // Industrial boundary weight
-            
-            // Compound total temperature drop calculation
-            var coolingDrop = (vegInput * vegEfficiency) + 
-                              (infraInput * infraEfficiency) + 
-                              (pmInput * pmEfficiency) + 
-                              (no2Input * no2Efficiency) + 
-                              (so2Input * so2Efficiency);
-                              
-            var calculatedNewTemp = baseTemp - coolingDrop;
-            var impactDisplay = document.getElementById('impactTemp');
-            
-            if (coolingDrop === 0) {
-                impactDisplay.innerText = baseTemp.toFixed(1) + "°C (Baseline)";
-                impactDisplay.style.color = "#f43f5e";
-                selectedLayerRef.setStyle({ color: '#00f2fe', fillColor: '#00c6ff', fillOpacity: 0.45 });
-            } else {
-                impactDisplay.innerText = `${calculatedNewTemp.toFixed(1)}°C (-${coolingDrop.toFixed(1)}°C Drop)`;
-                impactDisplay.style.color = "#10b981";
-                
-                selectedLayerRef.setStyle({
-                    color: '#10b981',
-                    fillColor: '#059669',
-                    fillOpacity: Math.min(0.6, 0.20 + (coolingDrop * 0.04))
-                });
-            }
+            updateSimulationDisplay(result);
         }
 
+        function updateSimulationDisplay(result = null) {
+            const impactDisplay = document.getElementById('impactTemp');
+            
+            if (!result || selectedHotspotData === null) {
+                impactDisplay.innerText = (selectedHotspotData?.temp || '--') + "°C (Baseline)";
+                impactDisplay.style.color = "#f43f5e";
+                if (selectedLayerRef) {
+                    selectedLayerRef.setStyle({ 
+                        color: '#00f2fe', 
+                        fillColor: '#00c6ff', 
+                        fillOpacity: 0.45 
+                    });
+                }
+                return;
+            }
+            
+            impactDisplay.innerText = `${result.finalTemp}°C (-${result.totalReduction}°C)`;
+            impactDisplay.style.color = "#10b981";
+            
+            // Visual feedback on map
+            selectedLayerRef.setStyle({
+                color: '#10b981',
+                fillColor: '#059669',
+                fillOpacity: Math.min(0.6, 0.20 + (result.totalReduction * 0.04))
+            });
+        }
+
+        // ============ Location Search ============
         function locateRegion() {
             var region = document.getElementById('areaName').value.trim();
             var latInput = parseFloat(document.getElementById('latitude').value);
@@ -304,7 +411,7 @@
                             document.getElementById('longitude').value = lon.toFixed(4);
                             updateMapMarker(lat, lon, "Searched Area: " + region.toUpperCase());
                         } else {
-                            alert("Location not found within Mumbai bounds.");
+                            alert("Location not found in Mumbai.");
                         }
                     });
             } else if (!isNaN(latInput) && !isNaN(lonInput)) {
@@ -319,13 +426,17 @@
             map.setView([lat, lng], 13);
         }
 
+        // Click on map to select location
         map.on('click', function(e) {
-            var clat = e.latlng.lat;
-            var clng = e.latlng.lng;
-            document.getElementById('latitude').value = clat.toFixed(4);
-            document.getElementById('longitude').value = clng.toFixed(4);
+            document.getElementById('latitude').value = e.latlng.lat.toFixed(4);
+            document.getElementById('longitude').value = e.latlng.lng.toFixed(4);
             document.getElementById('areaName').value = "";
-            updateMapMarker(clat, clng, "Selected Position");
+            updateMapMarker(e.latlng.lat, e.latlng.lng, "Selected Position");
+        });
+
+        // Initialize pollution data on load
+        window.addEventListener('load', function() {
+            initializeDummyPollutionData();
         });
     </script>
 </body>
