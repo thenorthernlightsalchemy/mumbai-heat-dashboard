@@ -121,10 +121,11 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script src="data-processor.js"></script>
+    <script src="gdrive-data-loader.js"></script>
     <script>
         // ============ Map Initialization ============
-        var boundsLimit = [[18.65, 72.45], [19.45, 73.25]];
+        // Expanded bounds limit slightly to accommodate full extent of image overlay
+        var boundsLimit = [[18.60, 72.40], [19.65, 73.40]];
         var map = L.map('map', {
             center: [19.0760, 72.8777],
             zoom: 11,
@@ -145,6 +146,7 @@
         var selectedHotspotData = null;
         var selectedLayerRef = null;
         var allHotspotsData = null;
+        var activeHoveredFeature = null; // Tracks current hovered hotspot to prevent event race conditions
 
         // ============ ECOSTRESS Heat Stress Map ============
         function showRealEcostressMap() {
@@ -182,13 +184,21 @@
                     data.features = data.features.map(feature => {
                         const props = feature.properties;
                         
-                        // Determine if coastal
-                        const coords = feature.geometry.coordinates[0][0];
-                        const isCoastal = coords[0] < 72.50; // Coastal threshold
+                        // Safely extract coordinates based on Geometry Type to avoid runtime crashes
+                        let coords = null;
+                        if (feature.geometry && feature.geometry.type) {
+                            if (feature.geometry.type === 'Point') {
+                                coords = feature.geometry.coordinates;
+                            } else if (feature.geometry.type === 'Polygon') {
+                                coords = feature.geometry.coordinates[0][0];
+                            } else if (feature.geometry.type === 'MultiPolygon') {
+                                coords = feature.geometry.coordinates[0][0][0];
+                            }
+                        }
                         
-                        // Verify against thresholds
-                        const threshold = isCoastal ? 37 : 40;
-                        const qualifiesAsHotspot = props.temp >= threshold;
+                        // Determine if coastal (fixed longitude threshold for Mumbai west coast)
+                        const isCoastal = coords ? coords[0] < 72.82 : false;
+                        props.is_coastal = isCoastal; // Saved directly to properties
                         
                         // Calculate drivers
                         if (!props.drivers || props.drivers.length === 0) {
@@ -196,6 +206,13 @@
                         }
                         
                         return feature;
+                    });
+                    
+                    // Filter features that qualify as hotspots based on physics threshold
+                    data.features = data.features.filter(feature => {
+                        const props = feature.properties;
+                        const threshold = props.is_coastal ? 37 : 40;
+                        return props.temp >= threshold;
                     });
                     
                     // Render hotspots on map
@@ -229,6 +246,8 @@
             layer.on('mouseover', function() {
                 if (!hoverWorkflowActive || interventionWorkflowActive) return;
                 
+                activeHoveredFeature = feature; // Set current hovered feature
+                
                 layer.setStyle({ 
                     color: '#f97316', 
                     fillColor: '#ea580c', 
@@ -248,7 +267,12 @@
                     fillColor: '#be123c', 
                     fillOpacity: 0.3 
                 });
-                document.getElementById('infoPanel').style.display = 'none';
+                
+                // Only hide the info panel if we are leaving the actual active hovered feature
+                if (activeHoveredFeature === feature) {
+                    document.getElementById('infoPanel').style.display = 'none';
+                    activeHoveredFeature = null;
+                }
             });
 
             // Click event for intervention selection
@@ -355,15 +379,18 @@
             document.getElementById('no2Val').innerText = no2 + "%";
             document.getElementById('so2Val').innerText = so2 + "%";
             
-            // Call physics-backed cooling calculation
-            const result = calculateCoolingEffect(
-                selectedHotspotData.temp,
-                selectedHotspotData.ndvi,
-                selectedHotspotData.ndbi,
-                veg, infra, pm, no2, so2
-            );
-            
-            updateSimulationDisplay(result);
+            // Call physics-backed cooling calculation (defined in external script)
+            if (typeof calculateCoolingEffect === 'function') {
+                const result = calculateCoolingEffect(
+                    selectedHotspotData.temp,
+                    selectedHotspotData.ndvi,
+                    selectedHotspotData.ndbi,
+                    veg, infra, pm, no2, so2
+                );
+                updateSimulationDisplay(result);
+            } else {
+                console.error("calculateCoolingEffect function is not loaded.");
+            }
         }
 
         function updateSimulationDisplay(result = null) {
@@ -413,6 +440,10 @@
                         } else {
                             alert("Location not found in Mumbai.");
                         }
+                    })
+                    .catch(err => {
+                        console.error("OSM Nominatim API Error: ", err);
+                        alert("Failed to reach location search service.");
                     });
             } else if (!isNaN(latInput) && !isNaN(lonInput)) {
                 updateMapMarker(latInput, lonInput, "Custom Coordinates");
@@ -434,9 +465,13 @@
             updateMapMarker(e.latlng.lat, e.latlng.lng, "Selected Position");
         });
 
-        // Initialize pollution data on load
+        // Initialize pollution data on load safely
         window.addEventListener('load', function() {
-            initializeDummyPollutionData();
+            if (typeof initializeDummyPollutionData === 'function') {
+                initializeDummyPollutionData();
+            } else {
+                console.warn("initializeDummyPollutionData was not found or failed to load from gdrive-data-loader.js.");
+            }
         });
     </script>
 </body>
