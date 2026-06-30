@@ -31,15 +31,20 @@ const CPCB_STATIONS = [
 
 // ============ Utility: Inverse Distance Weighting for Spatial Interpolation ============
 function calculateIDW(point, stations, pollutant, power = 2) {
+    // Fixed: Handle exact match check outside loop to ensure proper early return
+    const exactMatch = stations.find(station => 
+        Math.hypot(point.lat - station.lat, point.lon - station.lon) < 0.001
+    );
+    if (exactMatch) {
+        return exactMatch.pollutants[pollutant];
+    }
+
     let numerator = 0, denominator = 0;
-    
     stations.forEach(station => {
         const distance = Math.hypot(
             point.lat - station.lat,
             point.lon - station.lon
         );
-        
-        if (distance < 0.001) return station.pollutants[pollutant]; // Exact match
         
         const weight = 1 / Math.pow(distance, power);
         numerator += station.pollutants[pollutant] * weight;
@@ -51,8 +56,8 @@ function calculateIDW(point, stations, pollutant, power = 2) {
 
 // ============ Utility: Determine if location is coastal ============
 function isCoastal(lat, lon) {
-    // Simplified: Areas within 2km of western edge are coastal
-    const coastalThreshold = 72.50;
+    // Fixed: Adjusted coastal boundary to 72.82 to align with Mumbai coast coordinates
+    const coastalThreshold = 72.82;
     return lon < coastalThreshold;
 }
 
@@ -128,13 +133,7 @@ function calculateHeatDrivers(lat, lon, ndvi, ndbi) {
     drivers.coastal_proximity = isCoastal(lat, lon) ? "Coastal" : "Inland";
     
     // 6. Combined Driver String for UI
-    const driverString = `
-        UHI Intensity: ${drivers.uhi_intensity}% | 
-        Built-up: ${drivers.built_up_fraction}% | 
-        Veg Deficit: ${drivers.vegetation_deficit}m² | 
-        PM2.5: ${drivers.pm25_concentration}µg/m³ | 
-        NO2: ${drivers.no2_concentration}ppb
-    `.trim();
+    const driverString = `UHI: ${drivers.uhi_intensity}% | Built-up: ${drivers.built_up_fraction}% | Veg Deficit: ${drivers.vegetation_deficit}m² | PM2.5: ${drivers.pm25_concentration}µg/m³ | NO2: ${drivers.no2_concentration}ppb`;
     
     return driverString;
 }
@@ -153,63 +152,43 @@ function calculateCoolingEffect(
     let tempReduction = 0;
     
     // ====== VEGETATION COOLING ======
-    // Physics: Latent heat cooling from evapotranspiration
-    // Efficiency depends on current vegetation (NDVI)
-    const vegCurrentFraction = (ndvi + 0.3) / 1.3; // Normalize to 0-1
-    const vegPotential = 1 - vegCurrentFraction; // Room for improvement
+    const vegCurrentFraction = (ndvi + 0.3) / 1.3; 
+    const vegPotential = 1 - vegCurrentFraction; 
     
-    // Maximum cooling ~2.5°C from full green canopy (from literature)
     const maxVegCooling = 2.5;
     const newVegCooling = (vegIncrease / 100) * vegPotential * maxVegCooling;
     tempReduction += newVegCooling;
     
     // ====== REFLECTIVE ROOFS (ALBEDO) ======
-    // Physics: Shortwave radiation reflection (Stefan-Boltzmann)
-    // Efficiency depends on current urban density (NDBI)
-    const urbFraction = (ndbi + 0.5) / 1.5; // Normalize urban area
+    const urbFraction = (ndbi + 0.5) / 1.5; 
     
-    // Maximum cooling ~1.8°C from full cool roof coverage
     const maxRoofCooling = 1.8;
     const newRoofCooling = (roofAlbedo / 100) * urbFraction * maxRoofCooling;
     tempReduction += newRoofCooling;
     
     // ====== PARTICULATE MITIGATION (PM2.5) ======
-    // Physics: Reduced atmospheric radiative forcing
-    // High PM2.5 creates greenhouse effect (radiative forcing ~0.3-0.5 W/m²)
-    // Corresponds to ~0.1-0.15°C warming effect
-    
-    // Maximum cooling ~0.8°C from full PM2.5 elimination
     const maxPMCooling = 0.8;
     const newPMCooling = (pmMitigation / 100) * maxPMCooling;
     tempReduction += newPMCooling;
     
     // ====== TRAFFIC EMISSION MITIGATION (NO2) ======
-    // Physics: Reduced NOx → reduced ozone formation → reduced thermal radiation absorption
-    // NO2 contributes ~0.05-0.08°C warming in urban areas
-    
-    // Maximum cooling ~0.5°C from full NO2 elimination
     const maxNO2Cooling = 0.5;
     const newNO2Cooling = (no2Mitigation / 100) * maxNO2Cooling;
     tempReduction += newNO2Cooling;
     
     // ====== INDUSTRIAL EMISSION MITIGATION (SO2) ======
-    // Physics: SO2 aerosols have complex radiative effects (cooling at surface)
-    // But reducing SO2 improves air quality; minimal direct thermal effect
-    
-    // Maximum cooling ~0.3°C (indirect benefits)
     const maxSO2Cooling = 0.3;
     const newSO2Cooling = (so2Mitigation / 100) * maxSO2Cooling;
     tempReduction += newSO2Cooling;
     
     // ====== NON-LINEAR INTERACTION DAMPING ======
-    // When multiple interventions applied, effectiveness decreases (diminishing returns)
     const numInterventions = [vegIncrease, roofAlbedo, pmMitigation, no2Mitigation, so2Mitigation]
         .filter(x => x > 0).length;
     
-    const damping = 1 - (numInterventions * 0.05); // ~5% reduction per additional intervention
+    const damping = 1 - (numInterventions * 0.05); 
     tempReduction *= damping;
     
-    const finalTemp = Math.max(baseTemp - tempReduction, 15); // Floor at 15°C
+    const finalTemp = Math.max(baseTemp - tempReduction, 15); 
     
     return {
         finalTemp: Math.round(finalTemp * 10) / 10,
@@ -225,23 +204,29 @@ function calculateCoolingEffect(
 }
 
 // ============ Helper: Extract Values from Grids ============
+// Fixed: Connected to dataLoader to retrieve actual values if active, falling back to dummy ranges
 function getECOSTRESSValue(grid, lat, lon) {
-    // Placeholder - in real implementation, interpolate from grid
-    return 42 + Math.random() * 8; // Dummy: 42-50°C range
+    if (typeof dataLoader !== 'undefined' && dataLoader.ecostress && dataLoader.ecostress.grid) {
+        return dataLoader.ecostress.getLSTAtLocation(lat, lon);
+    }
+    return 42 + Math.random() * 8; 
 }
 
 function getNDVIValue(grid, lat, lon) {
-    // Placeholder - interpolate from NDVI grid
-    return 0.1 + Math.random() * 0.4; // Dummy: 0.1-0.5 range
+    if (typeof dataLoader !== 'undefined' && dataLoader.vegetation && dataLoader.vegetation.ndviGrid) {
+        return dataLoader.vegetation.getNDVIAtLocation(lat, lon);
+    }
+    return 0.1 + Math.random() * 0.4; 
 }
 
 function getNDBIValue(grid, lat, lon) {
-    // Placeholder - interpolate from NDBI grid
-    return 0.3 + Math.random() * 0.4; // Dummy: 0.3-0.7 range
+    if (typeof dataLoader !== 'undefined' && dataLoader.vegetation && dataLoader.vegetation.ndbiGrid) {
+        return dataLoader.vegetation.getNDBIAtLocation(lat, lon);
+    }
+    return 0.3 + Math.random() * 0.4; 
 }
 
 function generateLocationName(lat, lon) {
-    // Simplified neighborhood mapping
     const neighborhoods = {
         "18.9676": "Colaba",
         "19.0596": "Bandra East",
@@ -250,7 +235,6 @@ function generateLocationName(lat, lon) {
         "19.0194": "Worli"
     };
     
-    // Find closest known point
     let closestName = "Unknown Location";
     let minDist = Infinity;
     
@@ -267,44 +251,41 @@ function generateLocationName(lat, lon) {
 
 // ============ Load CPCB Data from CSV/JSON ============
 async function loadCPCBData(dataSource) {
-    // This function will be called with data from Google Drive
-    // Expected format: Array of {station, date, PM2.5, PM10, NO2, SO2}
     try {
         const response = await fetch(dataSource);
         const data = await response.json();
         
-        // Aggregate by station (take latest or average)
         data.forEach(record => {
             const station = CPCB_STATIONS.find(s => s.name === record.station);
             if (station) {
-                station.pollutants.PM2_5 = record.PM2_5 || station.pollutants.PM2_5;
-                station.pollutants.PM10 = record.PM10 || station.pollutants.PM10;
-                station.pollutants.NO2 = record.NO2 || station.pollutants.NO2;
-                station.pollutants.SO2 = record.SO2 || station.pollutants.SO2;
+                // Fixed: Safe bracket access to support both "PM2.5" (CSV standard) and "PM2_5" (JS key)
+                station.pollutants.PM2_5 = record.PM2_5 || record['PM2.5'] || station.pollutants.PM2_5;
+                station.pollutants.PM10 = record.PM10 || record['PM10'] || station.pollutants.PM10;
+                station.pollutants.NO2 = record.NO2 || record['NO2'] || station.pollutants.NO2;
+                station.pollutants.SO2 = record.SO2 || record['SO2'] || station.pollutants.SO2;
             }
         });
         
         console.log("CPCB Data Loaded:", CPCB_STATIONS);
     } catch (err) {
         console.error("Error loading CPCB data:", err);
-        // Use dummy data
         initializeDummyPollutionData();
     }
 }
 
 // ============ Initialize Dummy Data (Fallback) ============
 function initializeDummyPollutionData() {
-    CPCB_STATIONS.forEach((station, idx) => {
+    CPCB_STATIONS.forEach((station) => {
         station.pollutants = {
-            PM2_5: 45 + Math.random() * 25,  // 45-70 µg/m³
-            PM10: 80 + Math.random() * 40,   // 80-120 µg/m³
-            NO2: 30 + Math.random() * 30,    // 30-60 ppb
-            SO2: 8 + Math.random() * 12      // 8-20 ppb
+            PM2_5: 45 + Math.random() * 25,  
+            PM10: 80 + Math.random() * 40,   
+            NO2: 30 + Math.random() * 30,    
+            SO2: 8 + Math.random() * 12      
         };
     });
 }
 
-// Export for use in map.html
+// Export for use in module environments
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         generateHotspotsFromECOSTRESS,
